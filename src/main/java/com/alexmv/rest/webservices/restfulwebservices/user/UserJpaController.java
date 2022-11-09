@@ -5,6 +5,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 import javax.validation.Valid;
 
@@ -19,32 +20,31 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-@RestController
-public class UserController {
-	
-	// http://localhost:8080/swagger-ui/index.html
-	// http://localhost:8080/actuator
-	
-	private UserDaoService service;
+import com.alexmv.rest.webservices.restfulwebservices.jpa.IUserRepository;
 
-	public UserController(UserDaoService service) {
-		this.service = service;
+@RestController
+public class UserJpaController {
+		
+	private IUserRepository repository;
+
+	public UserJpaController( IUserRepository repository) {
+		this.repository = repository;
 	}
 
-	@GetMapping("/users")
+	@GetMapping("/jpa/users")
 	public List<User> retrieveAllUsers() {
-		return service.findAll();
+		return repository.findAll();
 	}
 
 	// EntityModel y WebMvcLinkBuilder -> HATEOAS
-	@GetMapping("/users/{id}")
+	@GetMapping("/jpa/users/{id}")
 	public EntityModel<User> retrieveUser(@PathVariable int id) {
-		User user = service.findOne(id);
+		Optional<User> user = repository.findById(id);
 		
-		if(user==null)
+		if(user.isEmpty())
 			throw new UserNotFoundException("id: "+id);
 		
-		EntityModel<User> entityModel = EntityModel.of(user);
+		EntityModel<User> entityModel = EntityModel.of(user.get());
 		
 		// HATEOAS
 		WebMvcLinkBuilder link = linkTo(methodOn(this.getClass()).retrieveAllUsers());
@@ -53,15 +53,15 @@ public class UserController {
 		return entityModel;
 	}
 	
-	@DeleteMapping("/users/{id}")
+	@DeleteMapping("/jpa/users/{id}")
 	public void deleteUser(@PathVariable int id) {
-		service.deleteById(id);
+		repository.deleteById(id);
 	}
 
-	@PostMapping("/users")
+	@PostMapping("/jpa/users")
 	public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
 		
-		User savedUser = service.save(user);
+		User savedUser = repository.save(user);
 
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
 						.path("/{id}")
@@ -70,12 +70,6 @@ public class UserController {
 		
 		return ResponseEntity.created(location).build();
 		
-	    //return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
-		/*
-		 El primer return cumple HATEAOS, en la respuesta en location devuelve la ruta /users/{id}
-		 El segundo return simplemente devuelve el objeto User creado
-		 * */
-
 	}
 
 }
