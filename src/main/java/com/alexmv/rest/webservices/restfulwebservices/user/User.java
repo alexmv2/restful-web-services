@@ -1,33 +1,40 @@
 package com.alexmv.rest.webservices.restfulwebservices.user;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.validation.constraints.Past;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity(name = "user_details")
 public class User {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
-	
-	@Size(min=2, message = "Name should have atleast 2 characters")
+
+	@Size(min = 2, message = "Name should have atleast 2 characters")
 	@JsonProperty("user_name")
 	private String name;
-	
+
 	@Past(message = "Birth Date should be in the past")
 	@JsonProperty("birth_date")
 	private LocalDate birthDate;
-	
+
+	@OneToMany(mappedBy = "user")
+	@JsonIgnore
+	private List<Post> posts;
+
 	public User() {
-		
+
 	}
 
 	public User(Integer id, String name, LocalDate birthDate) {
@@ -60,10 +67,18 @@ public class User {
 	public void setBirthDate(LocalDate birthDate) {
 		this.birthDate = birthDate;
 	}
-	
+
+	public List<Post> getPosts() {
+		return posts;
+	}
+
+	public void setPosts(List<Post> posts) {
+		this.posts = posts;
+	}
+
 	@Override
 	public String toString() {
 		return "User [id=" + id + ", name=" + name + ", birthDate=" + birthDate + "]";
 	}
-	
+
 }
